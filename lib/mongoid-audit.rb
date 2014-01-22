@@ -7,6 +7,7 @@ module Mongoid
     mattr_accessor :tracker_class_name
     mattr_accessor :trackable_class_options
     mattr_accessor :modifier_class_name
+    mattr_accessor :master_class_name
     mattr_accessor :current_user_method
 
     def self.tracker_class
@@ -24,6 +25,7 @@ require 'mongoid-audit/trackable'
 require 'mongoid-audit/sweeper'
 
 Mongoid::Audit.modifier_class_name = "User"
+Mongoid::Audit.master_class_name = "User"
 Mongoid::Audit.trackable_class_options = {}
 Mongoid::Audit.current_user_method ||= :current_user
 
