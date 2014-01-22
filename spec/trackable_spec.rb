@@ -40,9 +40,10 @@ describe Mongoid::Audit::Trackable do
       @expected_option = {
         :on             =>  :all,
         :modifier_field =>  :modifier,
+        :master_field   =>  :master,
         :version_field  =>  :version,
         :scope          =>  :my_model,
-        :except         =>  ["version", "created_at", "updated_at", "deleted_at", "c_at", "u_at", "modifier_id", "_id", "id"].sort,
+        :except         =>  ["version", "created_at", "updated_at", "deleted_at", "c_at", "u_at", "modifier_id", "master_id", "_id", "id"].sort,
         :track_create   =>  false,
         :track_update   =>  true,
         :track_destroy  =>  false,

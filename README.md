@@ -118,6 +118,7 @@ class Post
   # telling Mongoid::Audit how you want to track changes
   track_history   :on => [:title, :body],       # track title and body fields only, default is :all
                   :modifier_field => :modifier, # adds "referenced_in :modifier" to track who made the change, default is :modifier
+                  :master_field => :master, # adds "referenced_in :master" to track the context of modifier
                   :version_field => :version,   # adds "field :version, :type => Integer" to track current version, default is :version
                   :track_create   =>  false,    # track document creation, default is false
                   :track_update   =>  true,     # track document updates, default is true

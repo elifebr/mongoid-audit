@@ -31,6 +31,7 @@ module Mongoid::Audit
 
     def before_create(track)
       track.modifier = audit_current_user if track.modifier.nil?
+      track.master = audit_current_user if track.master.nil?
     end
 
     def audit_current_user

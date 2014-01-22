@@ -16,6 +16,7 @@ module Mongoid::Audit
       field       :action,                  :type => String
       field       :scope,                   :type => String
       belongs_to  :modifier,                :class_name => Mongoid::Audit.modifier_class_name
+      belongs_to  :master,                  :class_name => Mongoid::Audit.master_class_name
 
       Mongoid::Audit.tracker_class_name = self.name.tableize.singularize.to_sym
 
@@ -40,39 +41,45 @@ module Mongoid::Audit
 
     end
 
-    def undo!(modifier)
+    def undo!(modifier, master)
       if action.to_sym == :destroy
         re_create
       elsif action.to_sym == :create
         re_destroy
       else
         trackable.update_attributes!(undo_attr(modifier))
+        trackable.update_attributes!(undo_attr(master))
       end
     end
 
-    def redo!(modifier)
+    def redo!(modifier, master)
       if action.to_sym == :destroy
         re_destroy
       elsif action.to_sym == :create
         re_create
       else
         trackable.update_attributes!(redo_attr(modifier))
+        trackable.update_attributes!(undo_attr(master))
       end
     end
 
-    def undo_attr(modifier)
+    def undo_attr(modifier, master)
       undo_hash = affected.easy_unmerge(modified)
       undo_hash.easy_merge!(original)
       modifier_field = trackable.history_trackable_options[:modifier_field]
       undo_hash[modifier_field] = modifier
+      master_field = trackable.history_trackable_options[:master_field]
+      undo_hash[master_field] = master
       undo_hash
     end
 
-    def redo_attr(modifier)
+    def redo_attr(modifier, master)
       redo_hash = affected.easy_unmerge(original)
       redo_hash.easy_merge!(modified)
       modifier_field = trackable.history_trackable_options[:modifier_field]
       redo_hash[modifier_field] = modifier
+      master_field = trackable.history_trackable_options[:master_field]
+      redo_hash[master_field] = master
       redo_hash
     end
 

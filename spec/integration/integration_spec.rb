@@ -62,7 +62,7 @@ describe Mongoid::Audit do
       belongs_to :updated_by, :class_name => "User"
 
       field             :title
-      track_history     :on => [:title], :scope => :post, :track_create => true, :track_destroy => true, :modifier_field => :updated_by
+      track_history     :on => [:title], :scope => :post, :track_create => true, :track_destroy => true, :modifier_field => :updated_by, :master_field => :master_id
     end
 
     class Restaurant 
