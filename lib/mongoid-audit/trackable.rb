@@ -9,7 +9,6 @@ module Mongoid::Audit
           :on             =>  :all,
           :except         =>  [:created_at, :updated_at, :deleted_at, :c_at, :u_at],
           :modifier_field =>  :modifier,
-          :master_field =>  :master,
           :version_field  =>  :version,
           :scope          =>  scope_name,
           :track_create   =>  false,
@@ -24,7 +23,6 @@ module Mongoid::Audit
         options[:except] = [options[:except]] unless options[:except].is_a? Array
         options[:except] << options[:version_field]
         options[:except] << "#{options[:modifier_field]}_id".to_sym
-        options[:except] << "#{options[:master_field]}_id".to_sym
         options[:except] += [:_id, :id]
         options[:except] = options[:except].map(&:to_s).flatten.compact.uniq
         options[:except].map(&:to_s)
@@ -37,7 +35,6 @@ module Mongoid::Audit
 
         field options[:version_field].to_sym, :type => Integer
         belongs_to options[:modifier_field].to_sym, :class_name => Mongoid::Audit.modifier_class_name
-        belongs_to options[:master_field].to_sym, :class_name => Mongoid::Audit.master_class_name
 
         include MyInstanceMethods
         extend SingletonMethods
@@ -80,27 +77,27 @@ module Mongoid::Audit
       #  undo :from => 1, :to => 5
       #  undo 4
       #  undo :last => 10
-      def undo!(modifier, master, options_or_version=nil)
+      def undo!(modifier, options_or_version=nil)
         versions = get_versions_criteria(options_or_version).to_a
         versions.sort!{|v1, v2| v2.version <=> v1.version}
 
         versions.each do |v|
           undo_attr = v.undo_attr(modifier)
           self.attributes = v.undo_attr(modifier)
-          undo_attr = v.undo_attr(master)
-          self.attributes = v.undo_attr(master)
+          undo_attr = v.undo_attr
+          self.attributes = v.undo_attr
         end
         save!
       end
 
-      def redo!(modifier, master, options_or_version=nil)
+      def redo!(modifier, options_or_version=nil)
         versions = get_versions_criteria(options_or_version).to_a
         versions.sort!{|v1, v2| v1.version <=> v2.version}
 
         versions.each do |v|
           redo_attr = v.redo_attr(modifier)
           self.attributes = redo_attr
-          redo_attr = v.redo_attr(master)
+          redo_attr = v.redo_attr
           self.attributes = redo_attr
         end
         save!
@@ -193,8 +190,7 @@ module Mongoid::Audit
         @history_tracker_attributes = {
           :association_chain  => traverse_association_chain,
           :scope              => history_trackable_options[:scope],
-          :modifier           => send("#{history_trackable_options[:modifier_field].to_s}_id_changed?".to_sym) ? send(history_trackable_options[:modifier_field]) : nil,
-          :master             => send("#{history_trackable_options[:master_field].to_s}_id_changed?".to_sym) ? send(history_trackable_options[:master_field]) : nil,
+          :modifier           => send("#{history_trackable_options[:modifier_field].to_s}_id_changed?".to_sym) ? send(history_trackable_options[:modifier_field]) : nil
         }
 
         original, modified = transform_changes(case method
@@ -215,7 +211,6 @@ module Mongoid::Audit
 
         track = Mongoid::Audit.tracker_class.create!(history_tracker_attributes(:update).merge(:version => current_version, :action => "update", :trackable => self))
         self.send("#{history_trackable_options[:modifier_field]}=", track.modifier)
-        self.send("#{history_trackable_options[:master_field]}=", track.master)
 
         clear_memoization
       end
@@ -227,7 +222,6 @@ module Mongoid::Audit
 
         track = Mongoid::Audit.tracker_class.create!(history_tracker_attributes(:create).merge(:version => current_version, :action => "create", :trackable => self))
         self.send("#{history_trackable_options[:modifier_field]}=", track.modifier)
-        self.send("#{history_trackable_options[:master_field]}=", track.master)
 
         clear_memoization
       end
@@ -238,7 +232,6 @@ module Mongoid::Audit
 
         track = Mongoid::Audit.tracker_class.create!(history_tracker_attributes(:destroy).merge(:version => current_version, :action => "destroy", :trackable => self))
         self.send("#{history_trackable_options[:modifier_field]}=", track.modifier)
-        self.send("#{history_trackable_options[:master_field]}=", track.master)
 
         clear_memoization
       end
