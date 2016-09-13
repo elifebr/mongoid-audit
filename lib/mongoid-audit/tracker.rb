@@ -12,7 +12,7 @@ module Mongoid::Audit
       field       :association_chain,       :type => Array,     :default => []
       field       :modified,                :type => Hash
       field       :original,                :type => Hash
-      field       :version,                 :type => Integer
+      field       :version,                 :type => Integer, :overwrite => true
       field       :action,                  :type => String
       field       :scope,                   :type => String
       belongs_to  :modifier,                :class_name => Mongoid::Audit.modifier_class_name
